@@ -186,3 +186,44 @@ class Projection:
 
         result = np.linalg.norm(y) <= self.tol
         return result, np.array(q)
+
+
+
+class QuaternionFeature(Feature):
+    def __init__(self):
+        # 四元数在四维空间内，但限制到具体值时是 3 维的流形
+        Feature.__init__(self, "Quaternion", dim_ambient=4, dim_feature=3)
+        self.target_quaternion = np.array([0, 1, 0, 0])
+
+    def y(self, q):
+        """
+        定义特征函数，q 是输入的四元数，输出为与目标四元数的差值约束。
+        """
+        q = np.array(q)  # 确保 q 是 NumPy 数组
+        return q - self.target_quaternion
+
+    def J(self, q):
+        """
+        雅可比矩阵，这里是恒等矩阵，因为对每个分量求导结果是单位。
+        """
+        return np.eye(4)
+
+    def param_to_quaternion(self, param):
+        """
+        由参数生成四元数。这里 param 是一个小扰动，
+        假设它在 3 维空间中，生成接近目标四元数的值。
+        """
+        delta = np.array([0] + list(param))  # 扩展到 4 维，保持第一个分量为 0
+        return self.target_quaternion + delta
+
+    def draw(self, limits):
+        """
+        可视化接近目标四元数的流形。这里只是返回目标四元数的位置。
+        """
+        n = 1
+        quaternions = np.tile(self.target_quaternion, (n, 1))
+        return quaternions
+
+    @property
+    def draw_type(self):
+        return "Point"

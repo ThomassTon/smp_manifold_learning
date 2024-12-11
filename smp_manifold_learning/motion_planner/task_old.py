@@ -1,11 +1,6 @@
 import numpy as np
 from smp_manifold_learning.motion_planner.feature import SphereFeature, ParaboloidFeature, PointFeature
-import robotic as ry
 
-C = ry.Config()
-C.clear()
-
-C.addFile('./scene/panda.g')
 
 class Task:
     def __init__(self, name):
@@ -43,11 +38,6 @@ class Task:
             self.manifolds.append(SphereFeature(r=1.0))
             self.manifolds.append(ParaboloidFeature(A=-A, b=b, c=-0.5))
             self.manifolds.append(PointFeature(goal=-self.start))
-
-        elif name == 'panda':
-            A = np.eye(2) * 0.5
-            b = np.zeros(2)
-            self.manifolds.append(ParaboloidFeature(A=A, b=b, c=0.5))
 
     def getJointSpaceVolume(self):
         vol = 1.0

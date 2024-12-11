@@ -231,7 +231,7 @@ if __name__ == "__main__":
     node2root_osa_losses = SOn.loss(target_y=np.float32(np.stack([dummy1_dset_dict['cov_nullspace'][root_idx,
                                                                                                     :, :]] * N_data)),
                                     predicted_y=np.float32(new_cov_nullspace))
-    node2root_osa_losses = node2root_osa_losses.numpy()
+    node2root_osa_losses = node2root_osa_losses.detach().numpy()
     print("All Nodes to Root: Orthogonal Subspace Alignment Losses[:10] = ", node2root_osa_losses[:10])
     print("                                                        Mean = ", np.mean(node2root_osa_losses))
     print("                                                        Std. = ", np.std(node2root_osa_losses))

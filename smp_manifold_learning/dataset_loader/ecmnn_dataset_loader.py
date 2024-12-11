@@ -43,18 +43,21 @@ class ECMNNDatasetLoader(DatasetLoader):
         else:
             is_aligning_lpca_normal_space_eigvecs = False
 
+
+        # load the data
         dataset_dict = {}
         dataset_dict['data'] = np.load(dataset_filepath + '.npy')
         N_data = dataset_dict['data'].shape[0]
         dim_ambient = dataset_dict['data'].shape[1]
         print('N_data = %d' % N_data)
-
+        print('dim_ambient = %d' % dim_ambient)
+        # init some weights
         dataset_dict['norm_level_data'] = np.zeros((N_data, 1))
         dataset_dict['norm_level_weight'] = np.ones((N_data, 1))
         dataset_dict['augmenting_vector'] = np.zeros_like(dataset_dict['data'])
 
         # N_local_neighborhood = int(round(N_data/1000))
-        N_local_neighborhood = N_local_neighborhood_mult * 2 * (2 ** dim_ambient)
+        N_local_neighborhood = N_local_neighborhood_mult * 2 * (2 ** (dim_ambient))
         print('N_local_neighborhood = %d (%f percent)' % (N_local_neighborhood,
                                                           (100.0 * N_local_neighborhood) /
                                                           N_data))

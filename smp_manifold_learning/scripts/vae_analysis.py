@@ -571,42 +571,42 @@ if __name__ == '__main__':
         do_plot_slice=do_plot_slice,
         experiment_folder=experiment_folder)
 
-    full_vae_evaluation_for_dataset(
-        dataset_name="circle",
-        training_data_filepath="../data/trajectories/circle_loop.npy",
-        experiment_trials_foldername='circle_trials',
-        do_barplots=do_barplots,
-        do_save_samples=do_save_samples,
-        do_save_recon=do_save_recon,
-        do_plot=do_plot,
-        do_eval=do_eval,
-        do_plot_slice=do_plot_slice,
-        experiment_folder=experiment_folder)
+    # full_vae_evaluation_for_dataset(
+    #     dataset_name="circle",
+    #     training_data_filepath="../data/trajectories/circle_loop.npy",
+    #     experiment_trials_foldername='circle_trials',
+    #     do_barplots=do_barplots,
+    #     do_save_samples=do_save_samples,
+    #     do_save_recon=do_save_recon,
+    #     do_plot=do_plot,
+    #     do_eval=do_eval,
+    #     do_plot_slice=do_plot_slice,
+    #     experiment_folder=experiment_folder)
 
-    full_vae_evaluation_for_dataset(
-        dataset_name="3dof",
-        training_data_filepath="../data/trajectories/3dof_v2_traj.npy",
-        experiment_trials_foldername='3DOF_trials',
-        do_barplots=do_barplots,
-        do_save_samples=do_save_samples,
-        do_save_recon=do_save_recon,
-        do_plot=do_plot,
-        do_eval=do_eval,
-        do_plot_slice=do_plot_slice,
-        experiment_folder=experiment_folder)
+    # full_vae_evaluation_for_dataset(
+    #     dataset_name="3dof",
+    #     training_data_filepath="../data/trajectories/3dof_v2_traj.npy",
+    #     experiment_trials_foldername='3DOF_trials',
+    #     do_barplots=do_barplots,
+    #     do_save_samples=do_save_samples,
+    #     do_save_recon=do_save_recon,
+    #     do_plot=do_plot,
+    #     do_eval=do_eval,
+    #     do_plot_slice=do_plot_slice,
+    #     experiment_folder=experiment_folder)
 
-    full_vae_evaluation_for_dataset(
-        dataset_name="6dof",
-        training_data_filepath="../data/trajectories/6dof_traj.npy",
-        experiment_trials_foldername='6DOF_trials',
-        do_barplots=do_barplots,
-        do_save_samples=do_save_samples,
-        do_save_recon=do_save_recon,
-        do_plot=do_plot,
-        do_eval=do_eval,
-        do_plot_slice=do_plot_slice,
-        experiment_folder=experiment_folder,
-        plot_4d=True)
+    # full_vae_evaluation_for_dataset(
+    #     dataset_name="6dof",
+    #     training_data_filepath="../data/trajectories/6dof_traj.npy",
+    #     experiment_trials_foldername='6DOF_trials',
+    #     do_barplots=do_barplots,
+    #     do_save_samples=do_save_samples,
+    #     do_save_recon=do_save_recon,
+    #     do_plot=do_plot,
+    #     do_eval=do_eval,
+    #     do_plot_slice=do_plot_slice,
+    #     experiment_folder=experiment_folder,
+    #     plot_4d=True)
 
     if do_barplots:
         plt.show()

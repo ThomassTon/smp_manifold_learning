@@ -26,7 +26,7 @@ nmse_threshold = 0.1
 
 
 parser = argparse.ArgumentParser(allow_abbrev=False)
-parser.add_argument("-d", "--dataset_option", default=1, type=int)
+parser.add_argument("-d", "--dataset_option", default=4, type=int)
 parser.add_argument("-u", "--is_performing_data_augmentation", default=1, type=int)
 parser.add_argument("-s", "--is_optimizing_signed_siamese_pairs", default=1, type=int)
 parser.add_argument("-a", "--is_aligning_lpca_normal_space_eigvecs", default=1, type=int)
@@ -141,7 +141,7 @@ def plot_inference_cross_section(model, meshgrid_c0c1_fixed_c2_pts, dims_cross_s
 
 
 def train_ecmnn(dataset_filepath, initial_learning_rate=0.001, weight_decay=0.0,
-                num_epochs=15, batch_size=128, device='cpu',
+                num_epochs=15, batch_size=64, device='gpu', #batch_size=128
                 hidden_sizes=[14, 11, 9, 7, 5, 3],
                 max_eval_c0c1_coord=2.5, N_linspace_eval=35,
                 is_performing_data_augmentation=True,
@@ -426,10 +426,11 @@ if __name__ == '__main__':
         model_name = 'model_3dof_traj'
         N_normal_space_traversal = 5
     elif (dataset_option == 4):
-        dataset_filepath_wo_ext = "../data/trajectories/6dof_traj"
+        # dataset_filepath_wo_ext = "../data/trajectories/6dof_traj"
+        dataset_filepath_wo_ext = "../data/trajectories/samples_panda"
         hidden_sizes = [36, 24, 18, 10]
         num_epochs = 25
-        model_name = 'model_6dof_traj'
+        model_name = 'model_samples'
         N_normal_space_traversal = 2
     elif (dataset_option == 5):  # Inequality Constraints, so it's N/A
         dataset_filepath_wo_ext = "../data/trajectories/nav_dataset_on"

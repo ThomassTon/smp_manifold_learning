@@ -6,7 +6,7 @@ manifold=([1]="3Dsphere" [2]="3Dcircle" [3]="3dof_v2_traj" [4]="6dof_traj")
 declare -A expmode
 expmode=([0]="normal" [1]="wo_augmentation" [2]="wo_rand_combination_normaleigvecs" [3]="wo_siamese_losses" [4]="wo_nspace_alignment" [5]="noisy_normal" [6]="no_siam_reflection" [7]="no_siam_frac_aug" [8]="no_siam_same_levelvec")
 
-for manifold_id in 1; do  #"${!manifold[@]}"; do
+for manifold_id in 4; do  #"${!manifold[@]}"; do
   for expmode_id in 0; do  #0 1 3 4 5 6 7 8; do  #"${!expmode[@]}"; do
     if [[ $expmode_id -eq 0 ]]; then
       bu=1

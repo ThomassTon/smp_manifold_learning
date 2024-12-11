@@ -121,7 +121,8 @@ if __name__ == '__main__':
     if do_sphere:
         generation_specification = {
             'dataset_filepath':
-            [('../data/trajectories/synthetic_unit_sphere_wo_noise', '')],
+            # [('../data/trajectories/synthetic_unit_sphere_wo_noise', '')],
+            [('../data/augmented/augmenting_vector','')],
             'input_size': [3],
             'model_type': [model_type],
             'beta': [beta],
