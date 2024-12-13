@@ -86,6 +86,7 @@ class PointFeature(Feature):
         self.goal = goal
 
     def y(self, x):
+
         return self.goal - x
 
     def J(self, x):
@@ -194,44 +195,43 @@ class SphereFeature(Feature):
 
 class Projection:
     def __init__(self, f_, J_, tol_=1e-4, max_iter_=2000, step_size_=0.05):
-        """
-        :param f_: 目标函数 f(q)
-        :param J_: 雅可比矩阵 J(q)
-        :param tol_: 容差
-        :param max_iter_: 最大迭代次数
-        """
+
         self.f = f_
         self.J = J_
         self.tol = tol_
         self.max_iter = max_iter_
-
+        self.lim_lo = np.array([-2.8973, -1.7628, -2.8973, -3.0718, -2.8973, 0.5, -2.8973])
+        self.lim_up = np.array([2.8973, 1.7628, 2.8973, -0.0698, 2.8973, 3, 2.8973])
+        self.lim = self.lim_up - self.lim_lo
     def project(self, q):
         """
-        使用改进的牛顿法进行投影 (不使用 Hessian 矩阵)
-        :param q: 初始点
-        :return: (是否成功, 投影结果)
+
         """
         y = self.f(q)
         y0 = 2.0 * np.linalg.norm(y)
         iter = 0
 
         while np.linalg.norm(y) > self.tol and iter < self.max_iter :
-            J = self.J(q)  # 计算雅可比矩阵
-
-            # 使用伪逆计算更新步长: delta_q = -J^\+ * y
+            J = self.J(q)  # 
             try:
-                delta_q = -np.linalg.pinv(J) @ y*0.05
+                delta_q = -np.linalg.pinv(J) @ y*0.1
             except np.linalg.LinAlgError:
-                print("雅可比矩阵伪逆计算失败，停止迭代")
                 break
 
-            q = q + delta_q  # 更新 q
-            y = self.f(q)  # 更新目标函数值
+            q = q + delta_q  
+            # for i, q_n in enumerate(q):
+            #     if q_n> self.lim_up[i]:
+            #         q[i] -=self.lim[i]
+            #     elif q_n < self.lim_lo[i]:
+            #         q[i] +=self.lim[i]
+
+
+            y = self.f(q) 
             iter += 1
 
-        print(f"最终误差: {np.linalg.norm(y)}, 迭代次数: {iter}")
+        # print(f"final error: {np.linalg.norm(y)}, itr: {iter}")
         result = np.linalg.norm(y) <= self.tol
-        print(q)
+        # print(q)
         return result, np.array(q)
     
 
@@ -245,22 +245,16 @@ class PandaQuaternionFeature(Feature):
         self.C.clear()
 
         self.C.addFile('../scene/panda.g')
-        # self.C.view(True)
     def quaternion_angle_difference(self,q1, q2):
-        # 确保四元数是单位四元数（长度为1）
         q1 = q1 / np.linalg.norm(q1)
         q2 = q2 / np.linalg.norm(q2)
         
-        # 计算四元数之间的点积
         dot_product = np.dot(q1, q2)
         
-        # 处理数值误差，确保点积在 [-1, 1] 范围内
         dot_product = np.clip(dot_product, -1.0, 1.0)
         
-        # 计算夹角（弧度）
         angle_rad = 2 * np.arccos(np.abs(dot_product))
         
-        # 转换为角度
         
         return angle_rad
     
@@ -270,13 +264,13 @@ class PandaQuaternionFeature(Feature):
         gripper = self.C.getFrame("gripper")
         q_target = np.array([0,1,0,0])
         q = gripper.getQuaternion()
-        q = np.array(q)  # 确保 q 是 NumPy 数组
+        q = np.array(q)  # 
         self.C.view(True)
+
         return np.abs(q)-np.abs(q_target)
 
     def J(self, q):
         """
-        雅可比矩阵，这里是恒等矩阵，因为对每个分量求导结果是单位。
         """
         self.C.setJointState(q)
         [y,J] = self.C.eval(ry.FS.quaternion,['gripper'])
@@ -286,15 +280,13 @@ class PandaQuaternionFeature(Feature):
 
     def param_to_quaternion(self, param):
         """
-        由参数生成四元数。这里 param 是一个小扰动，
-        假设它在 3 维空间中，生成接近目标四元数的值。
+
         """
-        delta = np.array([0] + list(param))  # 扩展到 4 维，保持第一个分量为 0
+        delta = np.array([0] + list(param))  # 
         return self.target_quaternion + delta
 
     def draw(self, limits):
         """
-        可视化接近目标四元数的流形。这里只是返回目标四元数的位置。
         """
         n = 1
         quaternions = np.tile(self.target_quaternion, (n, 1))
@@ -306,6 +298,6 @@ class PandaQuaternionFeature(Feature):
 
 if __name__ == "__main__":
     p = PandaQuaternionFeature()
-    q = np.array((-0.59164997,  5.93505992, -4.82810304, -1.16439387,  1.73911683  ,0.91724404,-2.35283622))
+    q = np.array((6.58271173, -0.62498075, -1.14866925,  0.46558879, -3.08819453  ,0.09839246, -3.2317301))
     print(p.y(q))
     p.J(q)

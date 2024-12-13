@@ -43,9 +43,9 @@ class Task:
 
         elif name == 'panda':
             self.d = 7
-            self.start = np.array([-0.059387, 0.679598, 0.306963, -0.0698, 2.47701, 2.30797, -0.87221])
+            self.start = np.array([2.89671 ,-0.529763 ,2.74556, -1.73206, -2.89574, 0.92889, -0.0451178])
             self.manifolds.append(PandaQuaternionFeature())
-            self.manifolds.append(PointFeature(goal=np.array([-0.59164997,  5.93505992, -4.82810304, -1.16439387,  1.73911683  ,0.91724404,-2.35283622])))  
+            self.manifolds.append(PointFeature(goal=np.array([1.20200433,  1.02800242, -1.7285036 , -0.68022009, -2.01895126 , 2.13372901, -1.10308423])))  
             self.lim_lo = np.array([-2.8973, -1.7628, -2.8973, -3.0718, -2.8973, 0.5, -2.8973])
             self.lim_up = np.array([2.8973, 1.7628, 2.8973, -0.0698, 2.8973, 3, 2.8973])
     def getJointSpaceVolume(self):

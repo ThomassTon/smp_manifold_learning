@@ -13,8 +13,8 @@ def unit_ball_measure(n):
     return (sqrt(pi) ** n) / gamma(float(n) / 2.0 + 1.0)
 
 
-def is_on_manifold(m, q, eps=1e-4):
-    print("is_on_manifold:  ",np.linalg.norm(m.y(q)))
+def is_on_manifold(m, q, eps=1e-3):
+    # print("is_on_manifold:  ",np.linalg.norm(m.y(q)))
     return np.linalg.norm(m.y(q)) < eps
 
 

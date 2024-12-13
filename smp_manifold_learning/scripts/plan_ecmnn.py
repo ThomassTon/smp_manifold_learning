@@ -12,7 +12,7 @@ class LearnedManifold(Feature):
         Feature.__init__(self, "Sphere", dim_ambient=7, dim_feature=4)
         self.r = 1
         self.ecmnn = EqualityConstraintManifoldNeuralNetwork(input_dim=7,
-                                                             hidden_sizes=[36, 24, 18, 10],
+                                                             hidden_sizes=[128, 64, 32, 16],
                                                              output_dim=4,
                                                              use_batch_norm=True, drop_p=0.0,
                                                              is_training=False, device='cpu')
@@ -59,18 +59,18 @@ cfg = '[general]\n' \
       'CONV_TOL       = 0.01\n' \
       'VIS            = 1\n' \
       'N              = 10000\n' \
-      'ALPHA          = 0.05\n' \
+      'ALPHA          = 0.5\n' \
       'BETA           = 0.5\n' \
       'COLLISION_RES  = 0.1\n' \
       'EPS            = 1e-1\n' \
       'RHO            = 5e-1\n' \
-      'R_MAX          = 5e-1\n' \
+      'R_MAX          = 1.5\n' \
       'PROJ_STEP_SIZE = 0.5'
 
 # task_name = 'sphere'
 task_name = 'panda'
 
-model_path = '../plot/ecmnn/model_samples_epoch22.pth'
+model_path = '../plot/ecmnn/model_samples_epoch12.pth'
 
 cfg = read_cfg(cfg)
 np.random.seed(cfg['SEED'])
@@ -91,10 +91,11 @@ C.clear()
 
 C.addFile('../scene/panda.g')
 for q in path[0]:
+    print(q)
     C.setJointState(q)
     C.view(False,"panda")
-    # time.sleep(.1)
-    # C.view_savePng("video/panda/new")
+    time.sleep(.1)
+    C.view_savePng("video/panda/panda")
     time.sleep(.1)
 # if path_idx is not None:
 #     task.plot(plot_dir='../plot/ecmnn/',
