@@ -43,7 +43,7 @@ class Task:
 
         elif name == 'panda':
             self.d = 7
-            self.start = np.array([2.89671 ,-0.529763 ,2.74556, -1.73206, -2.89574, 0.92889, -0.0451178])
+            self.start = np.array([2.57796, 0.343075, 0.47827, -0.372178, 2.89721 ,2.44753, 2.65501])
             self.manifolds.append(PandaQuaternionFeature())
             self.manifolds.append(PointFeature(goal=np.array([1.20200433,  1.02800242, -1.7285036 , -0.68022009, -2.01895126 , 2.13372901, -1.10308423])))  
             self.lim_lo = np.array([-2.8973, -1.7628, -2.8973, -3.0718, -2.8973, 0.5, -2.8973])

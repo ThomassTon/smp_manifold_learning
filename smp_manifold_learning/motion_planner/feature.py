@@ -298,6 +298,6 @@ class PandaQuaternionFeature(Feature):
 
 if __name__ == "__main__":
     p = PandaQuaternionFeature()
-    q = np.array((6.58271173, -0.62498075, -1.14866925,  0.46558879, -3.08819453  ,0.09839246, -3.2317301))
+    q = np.array(( 2.92502982 , 0.57628698 , 0.2050007,  -0.09217279 , 2.98584961 , 2.55276375, 2.90057595))
     print(p.y(q))
     p.J(q)

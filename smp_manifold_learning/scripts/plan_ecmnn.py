@@ -70,7 +70,7 @@ cfg = '[general]\n' \
 # task_name = 'sphere'
 task_name = 'panda'
 
-model_path = '../plot/ecmnn/model_samples_epoch12.pth'
+model_path = '../plot/ecmnn/model_samples_epoch24.pth'
 
 cfg = read_cfg(cfg)
 np.random.seed(cfg['SEED'])

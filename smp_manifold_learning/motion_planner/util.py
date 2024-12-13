@@ -14,7 +14,7 @@ def unit_ball_measure(n):
 
 
 def is_on_manifold(m, q, eps=1e-3):
-    # print("is_on_manifold:  ",np.linalg.norm(m.y(q)))
+    print("is_on_manifold:  ",np.linalg.norm(m.y(q)))
     return np.linalg.norm(m.y(q)) < eps
 
 
