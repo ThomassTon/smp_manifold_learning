@@ -1,5 +1,6 @@
 *.pyc
 .idea/
+*.png
 .ipynb_checkpoints/
 **/__pycache__/
 smp_manifold_learning.egg-info/
