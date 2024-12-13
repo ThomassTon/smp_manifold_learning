@@ -10,7 +10,7 @@ smp_manifold_learning/plot/**/*.pkl
 smp_manifold_learning/plot/**/*.npz
 smp_manifold_learning/plot/**/*.png
 smp_manifold_learning/plot/**/*.txt
-smp_manifold_learning/plot/**/*.pth
+# smp_manifold_learning/plot/**/*.pth
 smp_manifold_learning/plot/**/*.html
 smp_manifold_learning/scripts/**/*.pth
 smp_manifold_learning/scripts/experiment_runs/

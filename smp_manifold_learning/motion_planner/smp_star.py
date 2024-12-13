@@ -36,7 +36,7 @@ class SMPStar:
         if not is_on_manifold(task.manifolds[0], task.start, self.eps):
             curr_projector = Projection(f_=task.manifolds[0].y, J_=task.manifolds[0].J, step_size_=self.proj_step_size)
             _,task.start = curr_projector.project(task.start)
-            # raise Exception('The start point is not on the manifold h(start)= ' + str(task.manifolds[0].y(task.start)))
+            raise Exception('The start point is not on the manifold h(start)= ' + str(task.manifolds[0].y(task.start)))
 
         # check if start point is in collision
         if self.task.is_collision_conf(task.start):
