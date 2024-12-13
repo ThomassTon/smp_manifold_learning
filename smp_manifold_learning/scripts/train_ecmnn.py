@@ -13,6 +13,7 @@ import tqdm
 import copy
 import matplotlib.pyplot as plt
 from smp_manifold_learning.differentiable_models.ecmnn import EqualityConstraintManifoldNeuralNetwork
+# from smp_manifold_learning.differentiable_models.rnn import  EqualityConstraintManifoldRNN as   EqualityConstraintManifoldNeuralNetwork
 from smp_manifold_learning.dataset_loader.ecmnn_dataset_loader import ECMNNDatasetLoader
 from smp_manifold_learning.data.synthetic.synthetic_unit_sphere_dataset_generator \
     import generate_synth_unit_sphere_dataset
@@ -34,7 +35,7 @@ parser.add_argument("-c", "--is_augmenting_w_rand_comb_of_normaleigvecs", defaul
 parser.add_argument("-r", "--rand_seed", default=38, type=int)
 parser.add_argument("-p", "--plot_save_dir", default='../plot/ecmnn/', type=str)
 parser.add_argument("-v", "--aug_dataloader_save_dir", default='../plot/ecmnn/', type=str)
-parser.add_argument("-l", "--is_using_logged_aug_dataloader", default=0, type=int)
+parser.add_argument("-l", "--is_using_logged_aug_dataloader", default=1, type=int)
 parser.add_argument("-n", "--is_dataset_noisy", default=0, type=int)
 parser.add_argument("-m", "--siam_mode", default='all', type=str)
 parser.add_argument("-t", "--N_normal_space_traversal_sphere", default=9, type=int)
@@ -141,7 +142,7 @@ def plot_inference_cross_section(model, meshgrid_c0c1_fixed_c2_pts, dims_cross_s
 
 
 def train_ecmnn(dataset_filepath, initial_learning_rate=0.001, weight_decay=0.0,
-                num_epochs=15, batch_size=64, device='gpu', #batch_size=128
+                num_epochs=15, batch_size=128, device='gpu', #batch_size=128
                 hidden_sizes=[14, 11, 9, 7, 5, 3],
                 max_eval_c0c1_coord=2.5, N_linspace_eval=35,
                 is_performing_data_augmentation=True,
@@ -152,7 +153,7 @@ def train_ecmnn(dataset_filepath, initial_learning_rate=0.001, weight_decay=0.0,
                 is_optimizing_signed_siamese_pairs=True,
                 clean_aug_data=True, is_aligning_lpca_normal_space_eigvecs=True,
                 is_augmenting_w_rand_comb_of_normaleigvecs=True, rand_seed=38,
-                plot_save_dir='../plot/ecmnn/', is_using_logged_aug_dataloader=False,
+                plot_save_dir='../plot/ecmnn/', is_using_logged_aug_dataloader=True,
                 aug_dataloader_save_dir='../plot/ecmnn/', siam_mode='all',
                 N_local_neighborhood_mult=1):
 
@@ -163,13 +164,15 @@ def train_ecmnn(dataset_filepath, initial_learning_rate=0.001, weight_decay=0.0,
     print('DEVICE = ', DEVICE)
 
     utils.create_dir_if_not_exist(aug_dataloader_save_dir)
-    aug_dataloader_filepath = aug_dataloader_save_dir + '/aug_dataloader_' + model_name + '.pkl'
-
+    aug_dataloader_filepath = aug_dataloader_save_dir +'aug_dataloader_'+ model_name + '.pkl'
+    print("aug_dataloader_filepath:  ", os.path.isfile(aug_dataloader_filepath))
     # Dataset Loader WITH Data Augmentation:
     if is_using_logged_aug_dataloader and os.path.isfile(aug_dataloader_filepath):
+        print("exist data")
         with open(aug_dataloader_filepath, 'rb') as aug_dataloader_input:
             aug_dataloader = pickle.load(aug_dataloader_input)
     else:
+        print(" no exist data")
         with open(aug_dataloader_filepath, 'wb') as aug_dataloader_output:
             aug_dataloader = ECMNNDatasetLoader(
                                 dataset_filepath,
@@ -251,8 +254,8 @@ def train_ecmnn(dataset_filepath, initial_learning_rate=0.001, weight_decay=0.0,
     ecmnn.eval()  # evaluation mode (e.g. dropout is de-activated)
 
     print("Before Training:")
-    ecmnn.print_inference_result(all_train_dataset, prefix_name='train')
-    ecmnn.print_inference_result(all_test_dataset, prefix_name='test')
+    # ecmnn.print_inference_result(all_train_dataset, prefix_name='train')
+    # ecmnn.print_inference_result(all_test_dataset, prefix_name='test')
     if is_printing_pred_stats:
         ecmnn.print_prediction_stats(all_on_manifold_dataset)
     print("")
@@ -300,8 +303,8 @@ def train_ecmnn(dataset_filepath, initial_learning_rate=0.001, weight_decay=0.0,
             opt.step()
         ecmnn.eval()  # evaluation mode (e.g. dropout is de-activated)
 
-        all_train_loss_components = ecmnn.print_inference_result(all_train_dataset, prefix_name='train')
-        all_test_loss_components = ecmnn.print_inference_result(all_test_dataset, prefix_name='test')
+        # all_train_loss_components = ecmnn.print_inference_result(all_train_dataset, prefix_name='train')
+        # all_test_loss_components = ecmnn.print_inference_result(all_test_dataset, prefix_name='test')
         if is_printing_pred_stats:
             ecmnn.print_prediction_stats(all_on_manifold_dataset)
         print("")
@@ -348,7 +351,7 @@ if __name__ == '__main__':
     is_augmenting_w_rand_comb_of_normaleigvecs = (args.is_augmenting_w_rand_comb_of_normaleigvecs == 1)
     plot_save_dir = args.plot_save_dir
     aug_dataloader_save_dir = args.aug_dataloader_save_dir
-    is_using_logged_aug_dataloader = (args.is_using_logged_aug_dataloader == 1)
+    is_using_logged_aug_dataloader =(args.is_using_logged_aug_dataloader == 1)
     is_dataset_noisy = (args.is_dataset_noisy == 1)
     siam_mode = args.siam_mode
     N_normal_space_traversal_sphere = args.N_normal_space_traversal_sphere
@@ -428,7 +431,7 @@ if __name__ == '__main__':
     elif (dataset_option == 4):
         # dataset_filepath_wo_ext = "../data/trajectories/6dof_traj"
         dataset_filepath_wo_ext = "../data/trajectories/samples_panda"
-        hidden_sizes = [36, 24, 18, 10]
+        hidden_sizes = [128, 64, 32, 16]
         num_epochs = 25
         model_name = 'model_samples'
         N_normal_space_traversal = 2

@@ -34,7 +34,9 @@ class SMPStar:
 
         # check if start point is on first manifold
         if not is_on_manifold(task.manifolds[0], task.start, self.eps):
-            raise Exception('The start point is not on the manifold h(start)= ' + str(task.manifolds[0].y(task.start)))
+            curr_projector = Projection(f_=task.manifolds[0].y, J_=task.manifolds[0].J, step_size_=self.proj_step_size)
+            _,task.start = curr_projector.project(task.start)
+            # raise Exception('The start point is not on the manifold h(start)= ' + str(task.manifolds[0].y(task.start)))
 
         # check if start point is in collision
         if self.task.is_collision_conf(task.start):
@@ -107,7 +109,8 @@ class SMPStar:
             self.G.V[q_from_id].con_extend = True
             yn = next_manifold.y(q_from)
             Jn = next_manifold.J(q_from)
-
+            # print("yn: ",yn)
+            # print("Jn: ",Jn)
             d = -Jn.T @ yn
             # project on current manifold
             J = null_space(curr_manifold.J(q_from))
@@ -191,11 +194,14 @@ class SMPStar:
             q_new = self.steer(q_near, q_near_id, q_target, curr_manifold, next_manifold)
 
             if q_new is None:
+                # print("none q_new")
                 continue
 
             # project q_new on current or next manifold
             on_next_manifold = False
+            # print("error on next manifold:  ",np.linalg.norm(next_manifold.y(q_new)))
             if np.linalg.norm(next_manifold.y(q_new)) < self.r_max:  # np.random.rand() * self.r_max:
+                # print("projecting new ")
                 res, q_new_proj = joint_projector.project(q_new)
                 if np.linalg.norm(q_new_proj - q_near) > self.alpha:
                     res, q_new_proj = curr_projector.project(q_new)
@@ -203,10 +209,12 @@ class SMPStar:
                 res, q_new_proj = curr_projector.project(q_new)
 
             if not res:
+                # print("not res")
                 continue  # continue if projection was not successful
 
             # check if q_new_proj is on the next manifold
             if is_on_manifold(next_manifold, q_new_proj, self.eps):
+                # print("on mani folf")
                 if len(self.V_goal) == 0:
                     on_next_manifold = True
                 else:
@@ -224,4 +232,8 @@ class SMPStar:
 
                 # add to V_goal if q_new is on the next manifold
                 if on_next_manifold:
+                    print("addddddd")
                     self.V_goal.append(q_new_idx)
+        
+
+        print("finish grow")

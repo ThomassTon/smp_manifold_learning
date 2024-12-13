@@ -15,134 +15,213 @@
 #          PyTorch does NOT yet support differentiable matrix exponentials (expm)
 #          ( https://github.com/pytorch/pytorch/issues/9983 ).
 #
-import tensorflow as tf
+import torch
 import numpy as np
 
 
 def convert_to_skewsymm(batch_params):
+    """
+    Convert batch of parameters to skew-symmetric matrices.
+    
+    Args:
+        batch_params (torch.Tensor or np.ndarray): Batch of parameters to convert
+    
+    Returns:
+        torch.Tensor: Batch of skew-symmetric matrices
+    """
+    # Ensure batch_params is a torch tensor
+    if not isinstance(batch_params, torch.Tensor):
+        batch_params = torch.tensor(batch_params, dtype=torch.float32)
+    
     N_batch = batch_params.shape[0]
-    # search for the skew-symmetricity dimension:
+    
+    # Search for the skew-symmetricity dimension
     i = 2
     while (int(round((i * (i - 1)) / 2)) < batch_params.shape[1]):
         i += 1
-    assert (int(round((i * (i - 1)) / 2)) == batch_params.shape[1]), \
+    
+    assert int(round((i * (i - 1)) / 2)) == batch_params.shape[1], \
         "Skew-symmetricity dimension is NOT found!"
     n = i
 
-    # please note that the ordering of params here does NOT comply with the ordering of so(n)
-    # e.g. for n==3 (SO(3)), the ordering below does NOT correspond
-    # to the ordering of params in an angular velocity (so(3)) vector
-    # that is transformed into a 3x3 skew-symmetric matrix
-    # (for our application this ordering does NOT matter!):
-    vec_params_list = tf.unstack(batch_params, axis=1)
-
-    ret_tensor = tf.zeros(shape=[N_batch, n, n])
+    # Create zero tensor for skew-symmetric matrices
+    ret_tensor = torch.zeros(N_batch, n, n, dtype=batch_params.dtype, device=batch_params.device)
+    
+    # Get lower triangular indices
     ii, jj = np.tril_indices(n=n, k=-1, m=n)
-    ret_mat_list = tf.unstack(ret_tensor, axis=1)
-    ret_vec_list = [tf.unstack(ret_mat_list[i], axis=1) for i in range(n)]
-    for i, j, vec_params in zip(ii, jj, vec_params_list):
-        ret_vec_list[i][j] = vec_params
-        ret_vec_list[j][i] = -vec_params
-    ret_mat_list = [tf.stack(ret_vec_list[i], axis=1) for i in range(n)]
-    ret_tensor = tf.stack(ret_mat_list, axis=1)
+    
+    # Unpack the parameters and populate skew-symmetric matrices
+    for k in range(N_batch):
+        for i, j, vec_params in zip(ii, jj, batch_params[k]):
+            ret_tensor[k, i, j] = vec_params
+            ret_tensor[k, j, i] = -vec_params
+    
     return ret_tensor
 
 
-class SpecialOrthogonalGroups(object):
+class SpecialOrthogonalGroups:
     def __init__(self, n, N_batch=1, rand_seed=38):
-        tf.random.set_seed(seed=rand_seed)
+        """
+        Initialize Special Orthogonal Groups.
+        
+        Args:
+            n (int): Dimension of the orthogonal group
+            N_batch (int, optional): Number of batch elements. Defaults to 1.
+            rand_seed (int, optional): Random seed. Defaults to 38.
+        """
+        torch.manual_seed(rand_seed)
+        
         self.N_batch = N_batch
-        assert (n >= 1)
+        assert n >= 1
         self.n = n
-        self.dim_params = int(round((self.n * (self.n - 1)) / 2))
+        self.dim_params = int(round((n * (n - 1)) / 2))
+        
         if self.dim_params > 0:
-            self.params = [tf.Variable(tf.random.normal(shape=[self.dim_params], mean=0.0, stddev=1.0e-7),
-                                       shape=[self.dim_params]) for i in range(self.N_batch)]
+            # Initialize parameters with small random values
+            self.params = torch.nn.ParameterList([
+                torch.nn.Parameter(torch.normal(0, 1e-7, size=(self.dim_params,))) 
+                for _ in range(self.N_batch)
+            ])
         else:
-            self.params = None
+            # For 1-dimensional case, create a dummy parameter list
+            self.params = torch.nn.ParameterList([
+                torch.nn.Parameter(torch.tensor([0.0]))
+            ])
 
     def __call__(self):
-        if self.params is not None:
-            tensor = convert_to_skewsymm(tf.stack(self.params, axis=0))
-            expm_tensor = tf.linalg.expm(tensor)
+        """
+        Generate orthogonal matrices.
+        
+        Returns:
+            torch.Tensor: Batch of orthogonal matrices
+        """
+        if self.dim_params > 0:
+            # Stack parameters and convert to skew-symmetric matrices
+            tensor = convert_to_skewsymm(torch.stack(list(self.params)))
+            
+            # Compute matrix exponential (equivalent to SO(n) transformation)
+            expm_tensor = torch.matrix_exp(tensor)
             return expm_tensor
         else:
-            return tf.ones(shape=[self.N_batch, 1, 1])
+            # For 1-dimensional case
+            return torch.ones(self.N_batch, 1, 1)
 
     def loss(self, target_y, predicted_y):
-        # orthonormality loss between predicted_y and target_y (for (iterative) alignment between the two)
-        # To-Do: maybe also try a loss function using matrix logarithm (logm)?
-        return tf.reduce_mean(tf.reduce_mean(tf.square((tf.eye(target_y.shape[2], batch_shape=[target_y.shape[0]]) -
-                                                        (tf.transpose(predicted_y, perm=[0, 2, 1]) @ target_y))),
-                                             axis=2),
-                              axis=1)
+        """
+        Compute orthonormality loss between predicted and target matrices.
+        
+        Args:
+            target_y (torch.Tensor): Target matrices
+            predicted_y (torch.Tensor): Predicted matrices
+        
+        Returns:
+            torch.Tensor: Mean orthonormality loss
+        """
+        # Create identity matrices with same batch and size as target
+        target_y = torch.tensor(target_y, dtype=torch.float32) if not isinstance(target_y, torch.Tensor) else target_y
+        predicted_y = torch.tensor(predicted_y, dtype=torch.float32) if not isinstance(predicted_y, torch.Tensor) else predicted_y
+        eye = torch.eye(target_y.shape[2], device=target_y.device).repeat(target_y.shape[0], 1, 1)
+        
+        # Compute orthonormality loss
+        orth_loss = torch.mean(torch.mean(torch.square(
+            eye - torch.bmm(predicted_y.transpose(1, 2), target_y)
+        ), dim=2), dim=1)
+        
+        return orth_loss
 
-    def train(self, inputs, target_outputs,
-              learning_rate=0.001, is_using_separate_opt_per_data_point=True):
+    def train(self, inputs, target_outputs, learning_rate=0.001, 
+              is_using_separate_opt_per_data_point=True):
+        """
+        Train the Special Orthogonal Groups model.
+        
+        Args:
+            inputs (torch.Tensor or np.ndarray): Input matrices
+            target_outputs (torch.Tensor or np.ndarray): Target output matrices
+            learning_rate (float, optional): Learning rate. Defaults to 0.001.
+            is_using_separate_opt_per_data_point (bool, optional): Use separate optimizer 
+                                                    for each data point. Defaults to True.
+        
+        Returns:
+            tuple: Losses, mean loss, SO(n) transforms, outputs
+        """
+        # Ensure inputs and target_outputs are torch tensors
+        inputs = torch.tensor(inputs, dtype=torch.float32) if not isinstance(inputs, torch.Tensor) else inputs
+        target_outputs = torch.tensor(target_outputs, dtype=torch.float32) if not isinstance(target_outputs, torch.Tensor) else target_outputs
+        
         N_batch = inputs.shape[0]
-        if is_using_separate_opt_per_data_point:  # slower, but usually more optimal
-            opt = [tf.keras.optimizers.RMSprop(learning_rate=learning_rate) for i in range(N_batch)]
+        
+        # Setup optimizers
+        if is_using_separate_opt_per_data_point and self.dim_params > 0:
+            opts = [torch.optim.RMSprop([self.params[i]], lr=learning_rate) 
+                    for i in range(N_batch)]
         else:
-            opt = tf.keras.optimizers.RMSprop(learning_rate=learning_rate)
-        with tf.GradientTape(persistent=is_using_separate_opt_per_data_point) as tape:
-            SOn_transform = self()
-            outputs = inputs @ SOn_transform
-            raw_losses = self.loss(target_outputs, outputs)
-            losses = tf.unstack(raw_losses)  # returns a list, one value per data pt.
-            mean_loss = tf.reduce_mean(raw_losses)  # returns a scalar (batch-averaged)
-        if self.params is not None:
-            if is_using_separate_opt_per_data_point:  # slower, but usually more optimal
-                lvars = [[self.params[i]] for i in range(N_batch)]
-                grads = [tape.gradient(losses[i], lvars[i]) for i in range(N_batch)]
-                [opt[i].apply_gradients(zip(grads[i], lvars[i]),
-                                        experimental_aggregate_gradients=False) for i in range(N_batch)]
+            # If no parameters or single optimizer, use all parameters
+            opt = torch.optim.RMSprop(self.params, lr=learning_rate)
+        
+        # Compute SO(n) transform and outputs
+        SOn_transform = self()
+        outputs = torch.bmm(inputs, SOn_transform)
+        
+        # Compute losses
+        raw_losses = self.loss(target_outputs, outputs)
+        losses = raw_losses.tolist()
+        mean_loss = torch.mean(raw_losses)
+        
+        # Compute gradients and update parameters
+        if self.dim_params > 0:
+            if is_using_separate_opt_per_data_point:
+                for i in range(N_batch):
+                    opts[i].zero_grad()
+                    raw_losses[i].backward(retain_graph=True)
+                    opts[i].step()
             else:
-                lvars = [self.params[i] for i in range(N_batch)]
-                grads = tape.gradient(mean_loss, lvars)
-                opt.apply_gradients(zip(grads, lvars),
-                                    experimental_aggregate_gradients=False)
-        losses = [loss.numpy() for loss in losses]
-        mean_loss = mean_loss.numpy()
-        return losses, mean_loss, SOn_transform, outputs
+                opt.zero_grad()
+                mean_loss.backward()
+                opt.step()
+        
+        return losses, mean_loss.item(), SOn_transform, outputs
 
 
 if __name__ == "__main__":
-    rand_seed = 38
-
-    tf.random.set_seed(seed=rand_seed)
+    torch.manual_seed(38)
 
     N_epoch = 151
     N_batch = 5
     test_num = 1  # 2
-    if test_num == 1:
-        n = 3
-    else:
-        n = 5
+    
+    n = 3 if test_num == 1 else 5
     dim_params = int(round((n * (n - 1)) / 2))
-    input_rot_mat = tf.linalg.expm(convert_to_skewsymm(tf.zeros(shape=[N_batch, dim_params])))
+    
+    # Initialize input and ground truth rotation matrices
+    input_rot_mat = torch.matrix_exp(convert_to_skewsymm(torch.zeros(N_batch, dim_params)))
+    
     if test_num == 1:
-        # if n == 3, the following ground truth is a 3D rotation matrix as big as PI radian w.r.t. z-axis:
-        ground_truth_output_rot_mat = tf.linalg.expm(convert_to_skewsymm(tf.stack([np.pi * tf.ones(shape=[N_batch])
-                                                                                   if i == 0
-                                                                                   else tf.zeros(shape=[N_batch])
-                                                                                   for i in range(dim_params)],
-                                                                                  axis=1)))
+        # For 3D case, ground truth is a rotation matrix of π radians around z-axis
+        ground_truth_output_params = torch.stack([
+            torch.tensor([np.pi if i == 0 else 0 for i in range(dim_params)]) for _ in range(N_batch)
+        ])
     else:
-        ground_truth_output_rot_mat = tf.linalg.expm(convert_to_skewsymm(tf.random.normal(shape=[N_batch, dim_params])))
+        # Random ground truth rotation matrices
+        ground_truth_output_params = torch.randn(N_batch, dim_params)
+    
+    ground_truth_output_rot_mat = torch.matrix_exp(convert_to_skewsymm(ground_truth_output_params))
     print("ground_truth_rot_mat = ", ground_truth_output_rot_mat)
 
-    SOn = SpecialOrthogonalGroups(n=n, N_batch=N_batch, rand_seed=rand_seed)
+    # Initialize Special Orthogonal Groups
+    SOn = SpecialOrthogonalGroups(n=n, N_batch=N_batch, rand_seed=38)
 
-    # Collect the history of SOn_transforms to display later
+    # Training loop
     SOn_transforms = []
     SOn_transform = SOn()
     for epoch in range(N_epoch):
         SOn_transforms.append(SOn_transform)
-        [current_losses, current_mean_loss, SOn_transform, _
-         ] = SOn.train(input_rot_mat, ground_truth_output_rot_mat,
-                       learning_rate=0.01, is_using_separate_opt_per_data_point=True)
+        current_losses, current_mean_loss, SOn_transform, _ = SOn.train(
+            input_rot_mat, ground_truth_output_rot_mat,
+            learning_rate=0.01, is_using_separate_opt_per_data_point=True
+        )
+        
         if epoch % 10 == 0:
-            print('Epoch %2d: ' % epoch)
-            print('           mean_loss = ', current_mean_loss)
-            print('           losses = ', current_losses)
-            print('           SO3_transform = ', SOn_transforms[-1], '\n')
+            print(f'Epoch {epoch:2d}: ')
+            print(f'           mean_loss = {current_mean_loss}')
+            print(f'           losses = {current_losses}')
+            print(f'           SO{n}_transform = \n{SOn_transforms[-1]}\n')

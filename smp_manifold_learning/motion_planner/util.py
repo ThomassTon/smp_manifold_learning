@@ -14,6 +14,7 @@ def unit_ball_measure(n):
 
 
 def is_on_manifold(m, q, eps=1e-4):
+    print("is_on_manifold:  ",np.linalg.norm(m.y(q)))
     return np.linalg.norm(m.y(q)) < eps
 
 
@@ -78,7 +79,7 @@ class Tree:
         self.node_count = 0
         self.exact_nn = exact_nn
 
-        self.kd_buffer_limit = 100
+        self.kd_buffer_limit = 1000
         self.kd_tree = None
         self.kd_off_ids = []
 
@@ -127,6 +128,7 @@ class Tree:
                 len(self.V) - len(self.kd_tree.data)) > self.kd_buffer_limit:
             # data = np.array()
             data = np.stack([v.value for v in self.V.values()])
+            data = np.nan_to_num(data, nan=0.0, posinf=1e10, neginf=-1e10)
             self.kd_tree = cKDTree(data)
             self.kd_off_ids.clear()
 
@@ -137,6 +139,7 @@ class Tree:
             self.update_kd_tree()
 
             near_idx = self.kd_tree.query(X=[node_value], return_distance=False)
+
             near_idx = min(self.kd_off_ids + list(near_idx.flatten()), key=lambda idx: np.linalg.norm(self.V[idx].value - node_value))
             near_node = self.V[near_idx]
 

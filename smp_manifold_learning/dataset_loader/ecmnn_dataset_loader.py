@@ -62,7 +62,7 @@ class ECMNNDatasetLoader(DatasetLoader):
                                                           (100.0 * N_local_neighborhood) /
                                                           N_data))
 
-        start_time = time.clock()
+        start_time = time.perf_counter()
         S_list = []
         kd_tree = cKDTree(data=dataset_dict['data'])
         for i in tqdm.tqdm(range(N_data)):
@@ -92,7 +92,7 @@ class ECMNNDatasetLoader(DatasetLoader):
             S_list.append(S)
 
         dataset_dict['cov'] = np.stack(S_list)
-        print("Local PCA Covariance Matrices are computed in %f seconds." % (time.clock() - start_time))
+        print("Local PCA Covariance Matrices are computed in %f seconds." % (time.perf_counter() - start_time))
 
         if is_optimizing_signed_siamese_pairs or is_computing_all_cost_components:
             dataset_dict['siam_reflection_data'] = copy.deepcopy(dataset_dict['data'])
@@ -119,7 +119,8 @@ class ECMNNDatasetLoader(DatasetLoader):
         diff_eigval = dataset_dict['cov_svd_s'][:, :(dim_ambient-1)] - dataset_dict['cov_svd_s'][:, 1:]
         argmax_diff_eigval = np.argmax(diff_eigval, axis=1)
         [dim_tangent_space, _] = stats.mode(argmax_diff_eigval, axis=None)
-        dim_tangent_space = dim_tangent_space[0] + 1
+        # dim_tangent_space = dim_tangent_space[0] + 3
+        dim_tangent_space = 3
         dim_normal_space = dim_ambient - dim_tangent_space
         print("Tangent Space Dimensionality = %d" % dim_tangent_space)
         print("Normal  Space Dimensionality = %d" % dim_normal_space)

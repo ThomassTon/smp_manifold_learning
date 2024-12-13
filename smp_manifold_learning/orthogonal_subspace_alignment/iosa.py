@@ -131,8 +131,8 @@ def align_normal_space_eigvecs(dataset_dict, N_local_neighborhood_mst=2,
                     window_past_mean_losses_list.pop(0)
                 window_past_mean_losses_list.append(current_mean_loss)
             child2parent_osa_losses[:, si, di] = np.array(current_losses)
-            child2parent_osa_SOn_transforms[:, si, di, :, :] = SOn_transforms
-            child2parent_osa_result[:, si, di, :, :] = alignment_result
+            child2parent_osa_SOn_transforms[:, si, di, :, :] = SOn_transforms.detach().cpu().numpy()
+            child2parent_osa_result[:, si, di, :, :] = alignment_result.detach().cpu().numpy()
     print('The (Iterative) Orthogonal Subspace Alignment (OSA) between Parent-Child Nodes is completed in %f seconds.' %
           (time.perf_counter() - start_time))
 

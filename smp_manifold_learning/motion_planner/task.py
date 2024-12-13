@@ -1,11 +1,8 @@
 import numpy as np
-from smp_manifold_learning.motion_planner.feature import SphereFeature, ParaboloidFeature, PointFeature
+from smp_manifold_learning.motion_planner.feature import SphereFeature, ParaboloidFeature, PointFeature, PandaQuaternionFeature
 import robotic as ry
 
-C = ry.Config()
-C.clear()
 
-C.addFile('./scene/panda.g')
 
 class Task:
     def __init__(self, name):
@@ -45,10 +42,12 @@ class Task:
             self.manifolds.append(PointFeature(goal=-self.start))
 
         elif name == 'panda':
-            A = np.eye(2) * 0.5
-            b = np.zeros(2)
-            self.manifolds.append(ParaboloidFeature(A=A, b=b, c=0.5))
-
+            self.d = 7
+            self.start = np.array([-0.059387, 0.679598, 0.306963, -0.0698, 2.47701, 2.30797, -0.87221])
+            self.manifolds.append(PandaQuaternionFeature())
+            self.manifolds.append(PointFeature(goal=np.array([-0.59164997,  5.93505992, -4.82810304, -1.16439387,  1.73911683  ,0.91724404,-2.35283622])))  
+            self.lim_lo = np.array([-2.8973, -1.7628, -2.8973, -3.0718, -2.8973, 0.5, -2.8973])
+            self.lim_up = np.array([2.8973, 1.7628, 2.8973, -0.0698, 2.8973, 3, 2.8973])
     def getJointSpaceVolume(self):
         vol = 1.0
         for i in range(self.d):
@@ -57,6 +56,18 @@ class Task:
 
     def is_collision_conf(self, q):
         return False
+
+    def motion_plan(self,qs):
+
+
+        C = ry.Config()
+        C.clear()
+
+        C.addFile('../scene/panda.g')
+        for q in qs:
+            C.setJointState(q)
+            C.view(True)
+
 
     def plot(self, plot_dir, G_list, V_goal_list, opt_path=None):
         import plotly.graph_objs as go

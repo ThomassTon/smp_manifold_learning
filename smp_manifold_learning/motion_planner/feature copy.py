@@ -160,6 +160,7 @@ class SphereFeature(Feature):
         self.r = r
 
     def y(self, x):
+        print("i am here!!!!!!!\n")
         return np.array([np.dot(x, x) - self.r ** 2])
 
     def J(self, x):
@@ -193,45 +194,26 @@ class SphereFeature(Feature):
 
 
 class Projection:
-    def __init__(self, f_, J_, tol_=1e-4, max_iter_=2000, step_size_=0.05):
-        """
-        :param f_: 目标函数 f(q)
-        :param J_: 雅可比矩阵 J(q)
-        :param tol_: 容差
-        :param max_iter_: 最大迭代次数
-        """
+    def __init__(self, f_, J_, tol_=1e-2, max_iter_=2000, step_size_=0.05):
         self.f = f_
         self.J = J_
         self.tol = tol_
         self.max_iter = max_iter_
+        self.step_size = step_size_
 
     def project(self, q):
-        """
-        使用改进的牛顿法进行投影 (不使用 Hessian 矩阵)
-        :param q: 初始点
-        :return: (是否成功, 投影结果)
-        """
         y = self.f(q)
         y0 = 2.0 * np.linalg.norm(y)
         iter = 0
+        while np.linalg.norm(y) > self.tol and iter < self.max_iter and np.linalg.norm(y) < y0:
+            J = self.J(q)
+            # print(J)
+            q = q - self.step_size * np.linalg.lstsq(J, y, rcond=-1)[0]
+            y = self.f(q)
 
-        while np.linalg.norm(y) > self.tol and iter < self.max_iter :
-            J = self.J(q)  # 计算雅可比矩阵
-
-            # 使用伪逆计算更新步长: delta_q = -J^\+ * y
-            try:
-                delta_q = -np.linalg.pinv(J) @ y*0.05
-            except np.linalg.LinAlgError:
-                print("雅可比矩阵伪逆计算失败，停止迭代")
-                break
-
-            q = q + delta_q  # 更新 q
-            y = self.f(q)  # 更新目标函数值
             iter += 1
-
-        print(f"最终误差: {np.linalg.norm(y)}, 迭代次数: {iter}")
+        print(np.linalg.norm(y))
         result = np.linalg.norm(y) <= self.tol
-        print(q)
         return result, np.array(q)
     
 
@@ -271,7 +253,7 @@ class PandaQuaternionFeature(Feature):
         q_target = np.array([0,1,0,0])
         q = gripper.getQuaternion()
         q = np.array(q)  # 确保 q 是 NumPy 数组
-        self.C.view(True)
+        # self.C.view(True)
         return np.abs(q)-np.abs(q_target)
 
     def J(self, q):
@@ -306,6 +288,6 @@ class PandaQuaternionFeature(Feature):
 
 if __name__ == "__main__":
     p = PandaQuaternionFeature()
-    q = np.array((-0.59164997,  5.93505992, -4.82810304, -1.16439387,  1.73911683  ,0.91724404,-2.35283622))
+    q = np.array((-1.19359, 0.923462, 0.293893,-0.976063, 2.8973, 1.27181, 0.153865))
     print(p.y(q))
     p.J(q)
